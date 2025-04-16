@@ -11,13 +11,11 @@
     #menu { position: absolute; top: 20%; left: 50%; transform: translateX(-50%); background: #fff; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 0 20px rgba(0,0,0,0.2); }
     .animal-btn { margin: 10px; cursor: pointer; font-size: 24px; padding: 10px 20px; border: none; border-radius: 10px; background-color: #eee; display: inline-flex; align-items: center; gap: 10px; }
     .animal-btn img { height: 32px; }
-    #score, #highscore { position: absolute; top: 10px; font-size: 20px; background: rgba(255,255,255,0.8); padding: 8px 12px; border-radius: 10px; }
+    #score, #highscore, #timer { position: absolute; top: 10px; font-size: 20px; background: rgba(255,255,255,0.8); padding: 8px 12px; border-radius: 10px; }
     #score { left: 10px; }
     #highscore { left: 150px; }
-    #music-toggle, #pause-toggle { position: absolute; top: 10px; font-size: 16px; background: #fff; border: none; padding: 5px 10px; border-radius: 8px; cursor: pointer; }
-    #music-toggle { right: 10px; }
-    #pause-toggle { right: 160px; }
-    #hud { position: absolute; bottom: 0; width: 100%; background: rgba(255,255,255,0.8); padding: 5px; font-size: 14px; text-align: center; }
+    #timer { left: 320px; }
+    #music-toggle { position: absolute; top: 10px; right: 10px; font-size: 16px; background: #fff; border: none; padding: 5px 10px; border-radius: 8px; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -33,8 +31,8 @@
   <canvas id="gameCanvas" width="800" height="400"></canvas>
   <div id="score">Score: 0</div>
   <div id="highscore">Highscore: 0</div>
-  <button id="music-toggle" onclick="toggleMusic()">🔈</button>
-    <div id="hud"></div>
+  <div id="timer">Čas: 0s</div>
+  <button id="music-toggle" onclick="toggleMusic()">🔈 Music</button>
 
   <audio id="bgMusic" loop>
     <source src="music.mp3" type="audio/mpeg">
@@ -42,32 +40,22 @@
   <audio id="collectSound">
     <source src="collect.mp3" type="audio/mpeg">
   </audio>
-  <audio id="shieldSound">
-    <source src="sounds/shield.mp3" type="audio/mpeg">
-  </audio>
-  <audio id="magnetSound">
-    <source src="sounds/magnet.mp3" type="audio/mpeg">
-  </audio>
 
   <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const scoreDisplay = document.getElementById('score');
     const highscoreDisplay = document.getElementById('highscore');
-    const hudDisplay = document.getElementById('hud');
+    const timerDisplay = document.getElementById('timer');
     const bgMusic = document.getElementById('bgMusic');
     const collectSound = document.getElementById('collectSound');
-    const shieldSound = document.getElementById('shieldSound');
-    const magnetSound = document.getElementById('magnetSound');
 
-    let gameSpeed = 2;
+    let gameSpeed = 3;
     let maxSpeed = 9;
     let score = 0;
     let highscore = localStorage.getItem('highscore') || 0;
     let gravity = 1.0;
-    let jumpPower = -8;
-let jumpDuration = 18; // počet snímků, kdy skok pokračuje
-let jumpFrames = 0;
+    let jumpPower = -20;
     let isJumping = false;
     let animal = 'racek';
     let playerY = 300;
@@ -76,16 +64,14 @@ let jumpFrames = 0;
     let foods = [];
     let stats = { croissant: 0, babovka: 0, chlebicek: 0, bonbon: 0 };
     let gameRunning = false;
-        let images = {};
-    let backgroundX = 0;
-    let grassX = 0;
-    let shield = false;
-    let magnet = false;
+    let images = {};
     let timePlayed = 0;
 
-    const backgroundImage = new Image();
+    let backgroundX = 0;
+    let grassX = 0;
+    let backgroundImage = new Image();
     backgroundImage.src = 'images/background.png';
-    const grassImage = new Image();
+    let grassImage = new Image();
     grassImage.src = 'images/grass.png';
 
     const groundY = 340;
@@ -93,15 +79,14 @@ let jumpFrames = 0;
       { name: 'croissant', points: 1 },
       { name: 'babovka', points: 1 },
       { name: 'chlebicek', points: 1 },
-      { name: 'bonbon', points: 2 },
-      { name: 'shield', points: 0 },
-      { name: 'magnet', points: 0 }
+      { name: 'bonbon', points: 2 }
     ];
 
     function preloadImages() {
       images['racek'] = new Image();
       images['racek'].src = 'images/racek.png';
     }
+
     preloadImages();
 
     function startGame(selectedAnimal) {
@@ -109,60 +94,53 @@ let jumpFrames = 0;
       animal = selectedAnimal;
       gameRunning = true;
       bgMusic.play();
-      setInterval(() => { if (gameSpeed < maxSpeed) gameSpeed += 0.2; }, 5000);
-      setInterval(() => { timePlayed++; }, 1000);
       generateObstacle();
       generateFood();
-      obstacles.push({ x: 600, width: 30, height: 40 });
-      foods.push({ x: 700, y: groundY - 90, type: 'croissant', points: 1 });
-      console.log('Initial obstacle and food added');
+      setInterval(() => {
+        if (gameRunning) {
+          timePlayed++;
+          timerDisplay.innerText = 'Čas: ' + timePlayed + 's';
+        }
+      }, 1000);
       requestAnimationFrame(gameLoop);
     }
 
-    
-
     function toggleMusic() {
-      if (bgMusic.paused) {
-        bgMusic.play();
-      } else {
-        bgMusic.pause();
-      }
+      bgMusic.paused ? bgMusic.play() : bgMusic.pause();
     }
 
     function drawPlayer() {
       if (animal === 'cat') {
         ctx.font = '40px Arial';
-        ctx.fillText('🐱', 120, playerY + 40);
+        ctx.fillText('🐱', 100, playerY + 40);
       } else if (animal === 'panda') {
         ctx.font = '40px Arial';
-        ctx.fillText('🐼', 120, playerY + 40);
+        ctx.fillText('🐼', 100, playerY + 40);
       } else {
-        ctx.drawImage(images[animal], 120, playerY, 50, 50);
+        ctx.drawImage(images[animal], 100, playerY, 50, 50);
       }
     }
 
     function generateObstacle() {
-      const loop = () => {
-        if (!gamePaused) {
-          const height = Math.random() > 0.5 ? 30 : 50;
-          obstacles.push({ x: canvas.width, width: 30, height });
-        }
-        console.log('Generating obstacle');
-        if (gameRunning) setTimeout(loop, 2000);
-      }, 2500);
+      const interval = Math.random() * 2000 + 1800;
+      const height = Math.random() > 0.5 ? 40 : 70;
+      setTimeout(() => {
+        obstacles.push({ x: canvas.width, width: 40, height });
+        if (gameRunning) generateObstacle();
+      }, interval);
     }
 
     function generateFood() {
-      const loop = () => {
-        if (!gamePaused) {
-          const food = foodTypes[Math.floor(Math.random() * foodTypes.length)];
-          const x = canvas.width;
-          const safe = !obstacles.some(ob => Math.abs(ob.x - x) < 60);
-          if (safe) foods.push({ x, y: groundY - 90, type: food.name, points: food.points });
+      const interval = Math.random() * 3000 + 1500;
+      setTimeout(() => {
+        const food = foodTypes[Math.floor(Math.random() * foodTypes.length)];
+        const x = canvas.width;
+        const safe = !obstacles.some(ob => Math.abs(ob.x - x) < 60);
+        if (safe) {
+          foods.push({ x: x, y: groundY - 90, type: food.name, points: food.points });
         }
-        console.log('Generating food');
-        if (gameRunning) setTimeout(loop, 2500);
-      }, 3000);
+        if (gameRunning) generateFood();
+      }, interval);
     }
 
     function drawObstacles() {
@@ -179,36 +157,18 @@ let jumpFrames = 0;
     }
 
     function checkCollisions() {
-      obstacles = obstacles.filter(ob => {
-        if (ob.x + ob.width < 0) return false; // odstraníme pokud mimo obraz
-        if (120 < ob.x + ob.width && 120 + 30 > ob.x && playerY + 40 > groundY - ob.height) {
-          if (shield) {
-            shield = false;
-            return false;
-          } else {
-            endGame();
-            return false;
-          }
+      obstacles.forEach(ob => {
+        if (100 < ob.x + ob.width && 100 + 30 > ob.x && playerY + 40 > groundY - ob.height) {
+          endGame();
         }
-        return true;
       });
 
       foods = foods.filter(fd => {
-        if (fd.x + 40 < 0) return false; // odstraníme pokud mimo obraz
-        const distance = Math.abs(fd.x - 120);
-        if ((distance < 35 && Math.abs(fd.y - playerY) < 40) || (magnet && distance < 100)) {
-          if (fd.type === 'shield') {
-            shield = true;
-            shieldSound.play();
-          } else if (fd.type === 'magnet') {
-            magnet = true;
-            magnetSound.play();
-            setTimeout(() => { magnet = false; }, 5000);
-          } else {
-            score += fd.points;
-            stats[fd.type]++;
-          }
+        if (Math.abs(fd.x - 100) < 35 && Math.abs(fd.y - playerY) < 40) {
+          score += fd.points;
+          stats[fd.type]++;
           collectSound.play();
+          gameSpeed = Math.min(gameSpeed + 0.1, maxSpeed);
           return false;
         }
         return true;
@@ -232,6 +192,7 @@ let jumpFrames = 0;
     function gameLoop() {
       if (!gameRunning) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+
       backgroundX -= gameSpeed * 0.5;
       grassX -= gameSpeed;
       if (backgroundX <= -800) backgroundX = 0;
@@ -249,11 +210,7 @@ let jumpFrames = 0;
       obstacles.forEach(ob => ob.x -= gameSpeed);
       foods.forEach(fd => fd.x -= gameSpeed);
 
-      if (jumpFrames > 0) {
-        jumpFrames--;
-      } else {
-        velocityY += gravity;
-      }
+      velocityY += gravity;
       playerY += velocityY;
       if (playerY > 300) {
         playerY = 300;
@@ -263,7 +220,6 @@ let jumpFrames = 0;
 
       scoreDisplay.innerText = 'Score: ' + score;
       highscoreDisplay.innerText = 'Highscore: ' + highscore;
-      hudDisplay.innerText = `Délka hry: ${timePlayed}s | Croissant: ${stats.croissant} | Bábovka: ${stats.babovka} | Chlebíček: ${stats.chlebicek} | Bonbon: ${stats.bonbon} | Štít: ${shield ? '✅' : '❌'} | Magnet: ${magnet ? '✅' : '❌'}`;
 
       requestAnimationFrame(gameLoop);
     }
@@ -272,7 +228,6 @@ let jumpFrames = 0;
       if (!isJumping && gameRunning) {
         velocityY = jumpPower;
         isJumping = true;
-        jumpFrames = jumpDuration;
       }
     }
 
