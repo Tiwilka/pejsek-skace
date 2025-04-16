@@ -67,6 +67,8 @@
     let highscore = localStorage.getItem('highscore') || 0;
     let gravity = 1.0;
     let jumpPower = -20;
+let jumpDuration = 10; // počet snímků, kdy skok pokračuje
+let jumpFrames = 0;
     let isJumping = false;
     let animal = 'racek';
     let playerY = 300;
@@ -123,7 +125,11 @@
     }
 
     function toggleMusic() {
-      bgMusic.paused ? bgMusic.play() : bgMusic.pause();
+      if (bgMusic.paused) {
+        bgMusic.play();
+      } else {
+        bgMusic.pause();
+      }
     }
 
     function drawPlayer() {
@@ -242,7 +248,11 @@
       obstacles.forEach(ob => ob.x -= gameSpeed);
       foods.forEach(fd => fd.x -= gameSpeed);
 
-      velocityY += gravity;
+      if (jumpFrames > 0) {
+        jumpFrames--;
+      } else {
+        velocityY += gravity;
+      }
       playerY += velocityY;
       if (playerY > 300) {
         playerY = 300;
@@ -261,6 +271,7 @@
       if (!isJumping && gameRunning && !gamePaused) {
         velocityY = jumpPower;
         isJumping = true;
+        jumpFrames = jumpDuration;
       }
     }
 
