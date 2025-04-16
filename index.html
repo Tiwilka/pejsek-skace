@@ -34,8 +34,7 @@
   <div id="score">Score: 0</div>
   <div id="highscore">Highscore: 0</div>
   <button id="music-toggle" onclick="toggleMusic()">🔈</button>
-  <button id="pause-toggle" onclick="togglePause()">⏸️</button>
-  <div id="hud"></div>
+    <div id="hud"></div>
 
   <audio id="bgMusic" loop>
     <source src="music.mp3" type="audio/mpeg">
@@ -77,8 +76,7 @@ let jumpFrames = 0;
     let foods = [];
     let stats = { croissant: 0, babovka: 0, chlebicek: 0, bonbon: 0 };
     let gameRunning = false;
-    let gamePaused = false;
-    let images = {};
+        let images = {};
     let backgroundX = 0;
     let grassX = 0;
     let shield = false;
@@ -111,18 +109,14 @@ let jumpFrames = 0;
       animal = selectedAnimal;
       gameRunning = true;
       bgMusic.play();
-      setInterval(() => { if (!gamePaused && gameSpeed < maxSpeed) gameSpeed += 0.2; }, 5000);
-      setInterval(() => { if (!gamePaused) timePlayed++; }, 1000);
+      setInterval(() => { if (gameSpeed < maxSpeed) gameSpeed += 0.2; }, 5000);
+      setInterval(() => { timePlayed++; }, 1000);
       generateObstacle();
       generateFood();
       requestAnimationFrame(gameLoop);
     }
 
-    function togglePause() {
-      gamePaused = !gamePaused;
-      document.getElementById('pause-toggle').textContent = gamePaused ? '▶️' : '⏸️';
-      if (!gamePaused) requestAnimationFrame(gameLoop);
-    }
+    
 
     function toggleMusic() {
       if (bgMusic.paused) {
@@ -135,12 +129,12 @@ let jumpFrames = 0;
     function drawPlayer() {
       if (animal === 'cat') {
         ctx.font = '40px Arial';
-        ctx.fillText('🐱', 100, playerY + 40);
+        ctx.fillText('🐱', 120, playerY + 40);
       } else if (animal === 'panda') {
         ctx.font = '40px Arial';
-        ctx.fillText('🐼', 100, playerY + 40);
+        ctx.fillText('🐼', 120, playerY + 40);
       } else {
-        ctx.drawImage(images[animal], 100, playerY, 50, 50);
+        ctx.drawImage(images[animal], 120, playerY, 50, 50);
       }
     }
 
@@ -181,7 +175,7 @@ let jumpFrames = 0;
 
     function checkCollisions() {
       obstacles = obstacles.filter(ob => {
-        if (100 < ob.x + ob.width && 100 + 30 > ob.x && playerY + 40 > groundY - ob.height) {
+        if (120 < ob.x + ob.width && 120 + 30 > ob.x && playerY + 40 > groundY - ob.height) {
           if (shield) {
             shield = false;
             return false;
@@ -194,7 +188,7 @@ let jumpFrames = 0;
       });
 
       foods = foods.filter(fd => {
-        const distance = Math.abs(fd.x - 100);
+        const distance = Math.abs(fd.x - 120);
         if ((distance < 35 && Math.abs(fd.y - playerY) < 40) || (magnet && distance < 100)) {
           if (fd.type === 'shield') {
             shield = true;
@@ -229,7 +223,7 @@ let jumpFrames = 0;
     }
 
     function gameLoop() {
-      if (!gameRunning || gamePaused) return;
+      if (!gameRunning) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       backgroundX -= gameSpeed * 0.5;
       grassX -= gameSpeed;
@@ -268,7 +262,7 @@ let jumpFrames = 0;
     }
 
     function jump() {
-      if (!isJumping && gameRunning && !gamePaused) {
+      if (!isJumping && gameRunning) {
         velocityY = jumpPower;
         isJumping = true;
         jumpFrames = jumpDuration;
