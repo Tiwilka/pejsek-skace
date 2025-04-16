@@ -16,7 +16,7 @@
     #highscore { left: 150px; }
     #music-toggle, #pause-toggle { position: absolute; top: 10px; font-size: 16px; background: #fff; border: none; padding: 5px 10px; border-radius: 8px; cursor: pointer; }
     #music-toggle { right: 10px; }
-    #pause-toggle { right: 120px; }
+    #pause-toggle { right: 160px; }
     #hud { position: absolute; bottom: 0; width: 100%; background: rgba(255,255,255,0.8); padding: 5px; font-size: 14px; text-align: center; }
   </style>
 </head>
@@ -66,7 +66,7 @@
     let score = 0;
     let highscore = localStorage.getItem('highscore') || 0;
     let gravity = 1.0;
-    let jumpPower = -24;
+    let jumpPower = -20;
     let isJumping = false;
     let animal = 'racek';
     let playerY = 300;
@@ -169,7 +169,7 @@
       foods.forEach(fd => {
         const img = new Image();
         img.src = `images/${fd.type}.png`;
-        ctx.drawImage(img, fd.x, fd.y, 40, 40);
+        img.onload = () => ctx.drawImage(img, fd.x, fd.y, 40, 40);
       });
     }
 
