@@ -142,18 +142,18 @@ let jumpFrames = 0;
     }
 
     function generateObstacle() {
-      setTimeout(() => {
+      const loop = () => {
         if (!gamePaused) {
           const height = Math.random() > 0.5 ? 30 : 50;
           obstacles.push({ x: canvas.width, width: 30, height });
         }
         console.log('Generating obstacle');
-        if (gameRunning) generateObstacle();
+        if (gameRunning) setTimeout(loop, 2000);
       }, 2500);
     }
 
     function generateFood() {
-      setTimeout(() => {
+      const loop = () => {
         if (!gamePaused) {
           const food = foodTypes[Math.floor(Math.random() * foodTypes.length)];
           const x = canvas.width;
@@ -161,7 +161,7 @@ let jumpFrames = 0;
           if (safe) foods.push({ x, y: groundY - 90, type: food.name, points: food.points });
         }
         console.log('Generating food');
-        if (gameRunning) generateFood();
+        if (gameRunning) setTimeout(loop, 2500);
       }, 3000);
     }
 
