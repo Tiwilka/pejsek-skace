@@ -113,6 +113,9 @@ let jumpFrames = 0;
       setInterval(() => { timePlayed++; }, 1000);
       generateObstacle();
       generateFood();
+      obstacles.push({ x: 600, width: 30, height: 40 });
+      foods.push({ x: 700, y: groundY - 90, type: 'croissant', points: 1 });
+      console.log('Initial obstacle and food added');
       requestAnimationFrame(gameLoop);
     }
 
