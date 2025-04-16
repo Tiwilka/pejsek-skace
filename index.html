@@ -65,7 +65,7 @@
     let score = 0;
     let highscore = localStorage.getItem('highscore') || 0;
     let gravity = 1.0;
-    let jumpPower = -16;
+    let jumpPower = -8;
 let jumpDuration = 18; // počet snímků, kdy skok pokračuje
 let jumpFrames = 0;
     let isJumping = false;
@@ -144,6 +144,7 @@ let jumpFrames = 0;
           const height = Math.random() > 0.5 ? 30 : 50;
           obstacles.push({ x: canvas.width, width: 30, height });
         }
+        console.log('Generating obstacle');
         if (gameRunning) generateObstacle();
       }, 2500);
     }
@@ -156,6 +157,7 @@ let jumpFrames = 0;
           const safe = !obstacles.some(ob => Math.abs(ob.x - x) < 60);
           if (safe) foods.push({ x, y: groundY - 90, type: food.name, points: food.points });
         }
+        console.log('Generating food');
         if (gameRunning) generateFood();
       }, 3000);
     }
@@ -175,6 +177,7 @@ let jumpFrames = 0;
 
     function checkCollisions() {
       obstacles = obstacles.filter(ob => {
+        if (ob.x + ob.width < 0) return false; // odstraníme pokud mimo obraz
         if (120 < ob.x + ob.width && 120 + 30 > ob.x && playerY + 40 > groundY - ob.height) {
           if (shield) {
             shield = false;
@@ -188,6 +191,7 @@ let jumpFrames = 0;
       });
 
       foods = foods.filter(fd => {
+        if (fd.x + 40 < 0) return false; // odstraníme pokud mimo obraz
         const distance = Math.abs(fd.x - 120);
         if ((distance < 35 && Math.abs(fd.y - playerY) < 40) || (magnet && distance < 100)) {
           if (fd.type === 'shield') {
