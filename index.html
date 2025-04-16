@@ -66,8 +66,8 @@
     let score = 0;
     let highscore = localStorage.getItem('highscore') || 0;
     let gravity = 1.0;
-    let jumpPower = -20;
-let jumpDuration = 10; // počet snímků, kdy skok pokračuje
+    let jumpPower = -16;
+let jumpDuration = 18; // počet snímků, kdy skok pokračuje
 let jumpFrames = 0;
     let isJumping = false;
     let animal = 'racek';
@@ -148,7 +148,7 @@ let jumpFrames = 0;
       setTimeout(() => {
         if (!gamePaused) {
           const height = Math.random() > 0.5 ? 30 : 50;
-          obstacles.push({ x: canvas.width, width: 40, height });
+          obstacles.push({ x: canvas.width, width: 30, height });
         }
         if (gameRunning) generateObstacle();
       }, 2500);
@@ -175,7 +175,7 @@ let jumpFrames = 0;
       foods.forEach(fd => {
         const img = new Image();
         img.src = `images/${fd.type}.png`;
-        img.onload = () => ctx.drawImage(img, fd.x, fd.y, 40, 40);
+        ctx.drawImage(img, fd.x, fd.y, 40, 40);
       });
     }
 
