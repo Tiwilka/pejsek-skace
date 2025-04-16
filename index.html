@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Animal Runner</title>
+  <title>Pochoutkový běh racka Káji</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; overflow: hidden; font-family: 'Arial'; background: #cceeff; }
-    canvas { display: block; margin: 0 auto; background: #87ceeb; touch-action: manipulation; }
+    html, body { height: 100%; overflow: hidden; font-family: 'Arial'; background: #000; }
+    canvas { display: block; margin: 0 auto; touch-action: manipulation; background: url('background.png') repeat-x; background-size: cover; }
     #menu { position: absolute; top: 20%; left: 50%; transform: translateX(-50%); background: #fff; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 0 20px rgba(0,0,0,0.2); }
-    .animal-btn { margin: 10px; cursor: pointer; font-size: 24px; padding: 10px 20px; border: none; border-radius: 10px; background-color: #eee; }
+    .animal-btn { margin: 10px; cursor: pointer; font-size: 24px; padding: 10px 20px; border: none; border-radius: 10px; background-color: #eee; display: inline-flex; align-items: center; gap: 10px; }
+    .animal-btn img { height: 32px; }
     #score, #highscore { position: absolute; top: 10px; font-size: 20px; background: rgba(255,255,255,0.8); padding: 8px 12px; border-radius: 10px; }
     #score { left: 10px; }
     #highscore { left: 150px; }
@@ -18,8 +19,11 @@
 </head>
 <body>
   <div id="menu">
-    <h2>Vyber si zvířátko:</h2>
-    <button class="animal-btn" onclick="startGame('racek')">🕊️ Racek</button>
+    <h2>Pochoutkový běh racka Káji</h2>
+    <p>Vyber si zvířátko:</p>
+    <button class="animal-btn" onclick="startGame('racek')">
+      <img src="images/racek.png" alt="Racek" /> Racek
+    </button>
     <button class="animal-btn" onclick="startGame('cat')">🐱 Kočka</button>
     <button class="animal-btn" onclick="startGame('panda')">🐼 Panda</button>
   </div>
@@ -47,14 +51,15 @@
     let maxSpeed = 9;
     let score = 0;
     let highscore = localStorage.getItem('highscore') || 0;
-    let gravity = 1.0;
-    let jumpPower = -15;
+    let gravity = 0.9;
+    let jumpPower = -24;
     let isJumping = false;
     let animal = 'racek';
     let playerY = 300;
     let velocityY = 0;
     let obstacles = [];
     let foods = [];
+    let stats = { croissant: 0, babovka: 0, chlebicek: 0, bonbon: 0 };
     let gameRunning = false;
     let images = {};
 
@@ -84,11 +89,7 @@
     }
 
     function toggleMusic() {
-      if (bgMusic.paused) {
-        bgMusic.play();
-      } else {
-        bgMusic.pause();
-      }
+      bgMusic.paused ? bgMusic.play() : bgMusic.pause();
     }
 
     function drawPlayer() {
@@ -104,9 +105,10 @@
     }
 
     function generateObstacle() {
-      const interval = Math.random() * 2000 + 1800; // 1.8–3.8 sekundy
+      const interval = Math.random() * 2000 + 1800;
+      const height = Math.random() > 0.5 ? 40 : 70;
       setTimeout(() => {
-        obstacles.push({ x: canvas.width, width: 40, height: 50 });
+        obstacles.push({ x: canvas.width, width: 40, height });
         if (gameRunning) generateObstacle();
       }, interval);
     }
@@ -115,36 +117,36 @@
       const interval = Math.random() * 3000 + 1500;
       setTimeout(() => {
         const food = foodTypes[Math.floor(Math.random() * foodTypes.length)];
-        foods.push({ x: canvas.width, y: groundY - 80, type: food.name, points: food.points });
+        foods.push({ x: canvas.width, y: groundY - 90, type: food.name, points: food.points });
         if (gameRunning) generateFood();
       }, interval);
     }
 
     function drawObstacles() {
       ctx.fillStyle = '#8B4513';
-      obstacles.forEach(ob => {
-        ctx.fillRect(ob.x, groundY - ob.height, ob.width, ob.height);
-      });
+      obstacles.forEach(ob => ctx.fillRect(ob.x, groundY - ob.height, ob.width, ob.height));
     }
 
     function drawFoods() {
       foods.forEach(fd => {
         const img = new Image();
         img.src = `images/${fd.type}.png`;
-        ctx.drawImage(img, fd.x, fd.y, 30, 30);
+        ctx.drawImage(img, fd.x, fd.y, 40, 40);
       });
     }
 
     function checkCollisions() {
       obstacles.forEach(ob => {
-        if (100 < ob.x + ob.width && 100 + 30 > ob.x && playerY + 40 > groundY - ob.height) {
+        let duckable = ob.height < 50 && animal === 'panda';
+        if (!duckable && 100 < ob.x + ob.width && 100 + 30 > ob.x && playerY + 40 > groundY - ob.height) {
           endGame();
         }
       });
 
       foods = foods.filter(fd => {
-        if (Math.abs(fd.x - 100) < 30 && Math.abs(fd.y - playerY) < 40) {
+        if (Math.abs(fd.x - 100) < 35 && Math.abs(fd.y - playerY) < 40) {
           score += fd.points;
+          stats[fd.type]++;
           collectSound.play();
           gameSpeed = Math.min(gameSpeed + 0.1, maxSpeed);
           return false;
@@ -159,14 +161,17 @@
         highscore = score;
         localStorage.setItem('highscore', highscore);
       }
-      alert('Game over! Your score: ' + score);
+      let message = `Tvoje skóre: ${score}\n\nSesbíral/a jsi:`;
+      for (let item in stats) {
+        if (stats[item] > 0) message += `\n${stats[item]}× ${item}`;
+      }
+      alert(message);
       window.location.reload();
     }
 
     function gameLoop() {
       if (!gameRunning) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
       ctx.fillStyle = '#228B22';
       ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
 
@@ -178,7 +183,8 @@
       obstacles.forEach(ob => ob.x -= gameSpeed);
       foods.forEach(fd => fd.x -= gameSpeed);
 
-      velocityY += gravity;
+      // Speciální fyzika
+      velocityY += animal === 'racek' ? gravity * 0.6 : gravity;
       playerY += velocityY;
       if (playerY > 300) {
         playerY = 300;
